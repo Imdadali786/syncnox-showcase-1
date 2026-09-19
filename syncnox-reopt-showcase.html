@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The plan fixes itself, all day | Syncnox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --panel:#FFFFFF; --soft-bg:#F2F4F6;
+    --line:#E7EBEC; --line2:#EEF1F2;
+    --ink:#1B2320; --ink2:#586460; --soft:#9BA6A1;
+    --done:#C4CBD0; --plan:#AEB6BD;
+    --green:#10B981; --green-deep:#0A7A57; --green-pale:#E9F7EF; --green-ring:#B9E7D5;
+    --amber:#C77A12; --amberbg:#FBF0DF;
+    --f:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --e:cubic-bezier(.4,.1,.2,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;border-radius:0}
+  html,body{margin:0}
+  body{font-family:var(--f);background:transparent;-webkit-font-smoothing:antialiased}
+  #stage{width:100%;overflow:hidden}
+
+  /* ===== dark-green -> light-green gradient backdrop ===== */
+  .card{position:relative;display:grid;grid-template-columns:minmax(238px,1fr) 1.7fr;align-items:stretch;
+    background:linear-gradient(145deg,#064E3B 0%,#0A7A57 34%,#2FB985 68%,#8DEBC4 100%);
+    padding:clamp(14px,1.8vw,22px);min-height:clamp(340px,36vw,480px)}
+  /* soft texture blobs over the gradient for depth (very subtle) */
+  .card::before{content:"";position:absolute;inset:0;background:
+    radial-gradient(120% 90% at 12% 8%, rgba(255,255,255,.14), transparent 55%),
+    radial-gradient(90% 80% at 92% 96%, rgba(4,60,44,.35), transparent 60%);
+    pointer-events:none}
+  .card > *{position:relative;z-index:1}
+
+  /* ===== LEFT rail (glass over gradient) ===== */
+  .rail{background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5), 0 20px 50px -30px rgba(4,40,30,.5);display:flex;flex-direction:column}
+  .rail .rhead{padding:clamp(15px,1.9vw,20px) clamp(16px,2vw,24px) clamp(11px,1.4vw,14px);border-bottom:1px solid var(--line)}
+  .rhead .re{font-size:clamp(.6rem,1vw,.68rem);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--green-deep)}
+  .rhead .rt{font-size:clamp(1.02rem,1.7vw,1.2rem);font-weight:700;letter-spacing:-.02em;color:var(--ink);margin-top:4px;line-height:1.12}
+  .feat{position:relative;text-align:left;background:transparent;border:none;border-bottom:1px solid var(--line);padding:clamp(13px,1.7vw,18px) clamp(16px,2vw,24px);cursor:pointer;transition:background .3s;display:flex;flex-direction:column;gap:4px;font-family:var(--f);width:100%}
+  .feat:last-child{border-bottom:none}
+  .feat:hover{background:#F5F8F7}
+  .feat.active{background:#F4FCF8}
+  .feat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green);transform:scaleY(0);transform-origin:top;transition:transform .4s var(--e)}
+  .feat.active::before{transform:scaleY(1)}
+  .feat .ft{display:flex;align-items:center;gap:.6em}
+  .feat .fnum{width:clamp(21px,2.5vw,25px);height:clamp(21px,2.5vw,25px);flex:none;display:flex;align-items:center;justify-content:center;background:var(--soft-bg);font-size:clamp(.62rem,1vw,.72rem);font-weight:700;color:var(--soft);transition:.35s}
+  .feat.active .fnum{background:var(--green);color:#fff}
+  .feat .fn{font-size:clamp(.86rem,1.45vw,1rem);font-weight:600;letter-spacing:-.015em;color:var(--ink2);transition:color .3s}
+  .feat.active .fn{color:var(--ink)}
+  .feat .fd{font-size:clamp(.73rem,1.15vw,.83rem);font-weight:450;line-height:1.42;color:var(--soft);max-height:0;opacity:0;overflow:hidden;transition:max-height .45s var(--e),opacity .35s,margin .45s}
+  .feat.active .fd{max-height:90px;opacity:1;margin-top:2px}
+  .feat .prog{position:absolute;left:0;bottom:0;height:2px;background:var(--green);width:0}
+
+  /* ===== RIGHT stage (glass card over gradient), FIXED height ===== */
+  .stagebox{position:relative;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(255,255,255,.6), 0 20px 50px -30px rgba(4,40,30,.5);overflow:hidden;min-height:clamp(320px,34vw,440px);padding:clamp(20px,2.8vw,32px);margin-left:clamp(14px,1.8vw,22px)}
+  .tl{position:relative;width:100%;height:100%;display:flex;flex-direction:column;gap:clamp(14px,2.2vw,22px);justify-content:center}
+  .tlhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .tltitle{font-size:clamp(.82rem,1.4vw,.98rem);font-weight:700;color:var(--ink);letter-spacing:-.01em}
+  .tlstatus{display:inline-flex;align-items:center;gap:.5em;font-size:clamp(.66rem,1.1vw,.78rem);font-weight:600;color:var(--green-deep);white-space:nowrap;padding:.34em .7em;background:var(--green-pale);box-shadow:inset 0 0 0 1px var(--green-ring);transition:.35s}
+  .tlstatus .sd{width:7px;height:7px;background:var(--green);flex:none;transition:.3s}
+  .tlstatus.run{color:var(--amber);background:var(--amberbg);box-shadow:inset 0 0 0 1px #F0DDBE}
+  .tlstatus.run .sd{background:var(--amber);animation:blink 1.1s ease-in-out infinite}
+  @keyframes blink{50%{opacity:.3}}
+
+  /* horizontal timeline (desktop) */
+  .lane{position:relative;height:clamp(80px,11vw,110px);background:var(--soft-bg);box-shadow:inset 0 0 0 1px var(--line)}
+  .lanelabel{position:absolute;top:clamp(9px,1.2vw,12px);left:clamp(11px,1.4vw,15px);font-size:clamp(.55rem,.9vw,.63rem);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+  .track{position:absolute;left:clamp(11px,1.4vw,15px);right:clamp(11px,1.4vw,15px);bottom:clamp(22px,2.8vw,28px);height:clamp(15px,2vw,21px);background:#E4E8EA}
+  .seg{position:absolute;top:0;bottom:0;transition:left .6s var(--e),width .6s var(--e),background .4s}
+  .seg.done{background:var(--done)} .seg.plan{background:var(--plan)} .seg.reopt{background:var(--green)}
+  .now{position:absolute;top:clamp(6px,.9vw,9px);bottom:clamp(6px,.9vw,9px);width:2px;background:var(--ink);z-index:4}
+  .now::before{content:"NOW";position:absolute;top:-2px;left:50%;transform:translate(-50%,-100%);font-size:clamp(.5rem,.82vw,.57rem);font-weight:700;letter-spacing:.06em;color:#fff;background:var(--ink);padding:.18em .45em;white-space:nowrap}
+  .pin{position:absolute;bottom:100%;transform:translateX(-50%);margin-bottom:7px;z-index:3;transition:opacity .4s}
+  .pin .dot{width:clamp(14px,1.8vw,18px);height:clamp(14px,1.8vw,18px);background:var(--panel);box-shadow:inset 0 0 0 2.4px var(--plan);display:flex;align-items:center;justify-content:center;font-size:clamp(.52rem,.85vw,.6rem);font-weight:700;color:var(--soft);transition:.4s}
+  .pin.done .dot{box-shadow:inset 0 0 0 2.4px var(--done);color:var(--done)}
+  .pin.win .dot{box-shadow:inset 0 0 0 2.4px var(--green)!important;color:var(--green-deep)!important;background:var(--green-pale)!important}
+  .pin .stick{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:2px;height:clamp(9px,1.2vw,13px);background:var(--line)}
+  .flag{position:absolute;bottom:100%;transform:translateX(-50%);margin-bottom:7px;z-index:5;opacity:0;transition:opacity .4s,transform .4s var(--e)}
+  .flag.show{opacity:1}
+  .flag .fl{display:inline-flex;align-items:center;gap:.4em;background:var(--ink);color:#fff;font-size:clamp(.53rem,.88vw,.61rem);font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:.3em .55em;white-space:nowrap}
+  .flag .fl .fd2{width:5px;height:5px;background:var(--amber)}
+  .flag .stick{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:2px;height:clamp(11px,1.5vw,16px);background:var(--ink)}
+  .axis{display:flex;justify-content:space-between;padding:0 clamp(11px,1.4vw,15px);margin-top:-4px}
+  .axis span{font-size:clamp(.53rem,.88vw,.61rem);font-weight:600;color:var(--soft);letter-spacing:.02em}
+
+  .toast{position:absolute;left:50%;bottom:clamp(14px,2vw,20px);transform:translateX(-50%) translateY(8px);z-index:6;display:inline-flex;align-items:center;gap:.5em;background:#12201A;color:#EAF6F0;padding:clamp(7px,1vw,10px) clamp(11px,1.5vw,15px);box-shadow:0 12px 30px -12px rgba(4,30,20,.6);opacity:0;transition:opacity .35s,transform .35s var(--e);pointer-events:none;white-space:nowrap;font-size:clamp(.7rem,1.05vw,.8rem);font-weight:600}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast .td{width:6px;height:6px;background:var(--green);flex:none}
+
+  /* the VERTICAL timeline (mobile) is hidden on desktop */
+  .vtl{display:none}
+
+  /* =========================== MOBILE (portrait) =========================== */
+  @media(max-width:680px){
+    .card{grid-template-columns:1fr;gap:12px;padding:12px;
+      background:linear-gradient(160deg,#064E3B 0%,#0A7A57 40%,#34C08D 78%,#A6EFD1 100%)}
+    /* rail: compact stacked header + horizontal chip tabs */
+    .rail{box-shadow:inset 0 0 0 1px rgba(255,255,255,.5), 0 12px 30px -20px rgba(4,40,30,.5)}
+    .rail .rhead{padding:14px 15px 10px}
+    .rhead .rt{font-size:1.06rem}
+    .featwrap{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .featwrap::-webkit-scrollbar{display:none}
+    .feat{border-bottom:none;border-right:1px solid var(--line);min-width:auto;flex:0 0 auto;padding:12px 15px;gap:3px}
+    .feat::before{top:auto;bottom:0;left:0;right:0;width:auto;height:3px;transform:scaleX(0);transform-origin:left}
+    .feat.active::before{transform:scaleX(1)}
+    .feat .fn{font-size:.9rem;white-space:nowrap}
+    .feat .fd{display:none}
+
+    /* stage: taller portrait box; hide horizontal timeline, show VERTICAL */
+    .stagebox{aspect-ratio:auto;min-height:clamp(360px,92vw,440px);padding:18px 16px;margin-left:0}
+    .tl{gap:14px;justify-content:flex-start}
+    .lane,.axis{display:none}                 /* horizontal timeline off on mobile */
+
+    .vtl{display:flex;flex-direction:column;position:relative;flex:1;padding-top:4px}
+    .vtrack{position:absolute;left:19px;top:8px;bottom:8px;width:2px;background:#E4E8EA}
+    .vfill{position:absolute;left:19px;top:8px;width:2px;background:var(--done);height:0;transition:height .5s var(--e);z-index:1}
+    .vnow{position:absolute;left:11px;width:18px;height:2px;background:var(--ink);z-index:4;transition:top .12s linear}
+    .vnow::after{content:"NOW";position:absolute;left:24px;top:50%;transform:translateY(-50%);font-size:.5rem;font-weight:700;letter-spacing:.06em;color:#fff;background:var(--ink);padding:.16em .4em;white-space:nowrap}
+    .vstop{position:relative;display:flex;align-items:center;gap:12px;padding:9px 0;z-index:2;min-height:40px;opacity:0;transform:translateX(-6px);transition:opacity .4s,transform .4s var(--e)}
+    .vstop.show{opacity:1;transform:none}
+    .vstop .vd{width:clamp(22px,7vw,26px);height:clamp(22px,7vw,26px);flex:none;background:var(--panel);box-shadow:inset 0 0 0 2.4px var(--plan);display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;color:var(--soft);transition:.4s;position:relative;left:8px}
+    .vstop.done .vd{box-shadow:inset 0 0 0 2.4px var(--done);color:var(--done)}
+    .vstop.win .vd{box-shadow:inset 0 0 0 2.4px var(--green)!important;color:var(--green-deep)!important;background:var(--green-pale)!important}
+    .vstop .vtxt{display:flex;flex-direction:column;gap:1px;padding-left:8px}
+    .vstop .vl{font-size:.86rem;font-weight:600;color:var(--ink);line-height:1.15}
+    .vstop .vs{font-size:.7rem;font-weight:500;color:var(--soft);line-height:1.2}
+    .vstop .vtag{margin-left:auto;font-size:.58rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:.22em .5em;white-space:nowrap}
+    .vstop .vtag.rush{background:var(--amberbg);color:var(--amber)}
+    .vstop .vtag.new{background:var(--green-pale);color:var(--green-deep)}
+    .vstop.flagrow .vd{box-shadow:inset 0 0 0 2.4px var(--amber);background:var(--amberbg);color:var(--amber)}
+
+    .toast{bottom:14px;font-size:.72rem;padding:8px 13px}
+  }
+  @media(max-width:400px){
+    .stagebox{min-height:clamp(340px,96vw,400px)}
+    .vstop .vl{font-size:.82rem}
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+  <div class="card" role="img" aria-label="Interactive timeline of a driver's day. NOW advances through the schedule; a rush order lands ahead of NOW; only upcoming stops re-optimize while completed work stays locked; then the updated plan is pushed to the driver.">
+
+    <!-- LEFT rail -->
+    <div class="rail">
+      <div class="rhead"><div class="re">Real-time re-optimization</div><div class="rt">The plan fixes itself, all day</div></div>
+      <div class="featwrap">
+        <button class="feat active" data-i="0"><div class="ft"><span class="fnum">1</span><span class="fn">Continuous monitoring</span></div><div class="fd">Every vehicle streams live position against the plan as the day runs.</div><span class="prog"></span></button>
+        <button class="feat" data-i="1"><div class="ft"><span class="fnum">2</span><span class="fn">Change detected</span></div><div class="fd">A rush order, cancellation or breakdown lands on the timeline ahead of NOW.</div><span class="prog"></span></button>
+        <button class="feat" data-i="2"><div class="ft"><span class="fnum">3</span><span class="fn">Targeted re-optimization</span></div><div class="fd">Only the stops after NOW re-solve — completed work stays locked.</div><span class="prog"></span></button>
+        <button class="feat" data-i="3"><div class="ft"><span class="fnum">4</span><span class="fn">Pushed to drivers</span></div><div class="fd">The new sequence and ETAs publish to the driver app in seconds.</div><span class="prog"></span></button>
+      </div>
+    </div>
+
+    <!-- RIGHT stage -->
+    <div class="stagebox">
+      <div class="tl">
+        <div class="tlhead">
+          <span class="tltitle" id="tltitle">Today · Van 7</span>
+          <span class="tlstatus" id="tlstatus"><span class="sd"></span><span id="tlst">On schedule</span></span>
+        </div>
+
+        <!-- desktop horizontal timeline -->
+        <div class="lane" id="lane">
+          <span class="lanelabel">Route schedule</span>
+          <div class="track" id="track">
+            <div class="seg done" id="segDone" style="left:0;width:0"></div>
+            <div class="seg plan" id="segPlan" style="left:0;width:100%"></div>
+          </div>
+          <div class="now" id="now" style="left:15px"></div>
+        </div>
+        <div class="axis"><span>8am</span><span>10am</span><span>12pm</span><span>2pm</span><span>4pm</span><span>6pm</span></div>
+
+        <!-- mobile vertical timeline -->
+        <div class="vtl" id="vtl">
+          <div class="vtrack"></div>
+          <div class="vfill" id="vfill"></div>
+          <div class="vnow" id="vnow" style="top:8px"></div>
+          <!-- vstops injected -->
+        </div>
+      </div>
+      <div class="toast" id="toast"><span class="td"></span><span id="toastTxt"></span></div>
+    </div>
+
+  </div>
+  </div><!-- /stage -->
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var isMobile=function(){return window.matchMedia("(max-width:680px)").matches;};
+
+  // ---------- shared data ----------
+  var BASE=[10,32,55,82];
+  var RUSH=[10,32,55,68,86];
+  var STOP_LABELS=["Warehouse","Elm Street","Oak Plaza","Depot"];
+  var RUSH_LABELS=["Warehouse","Elm Street","Oak Plaza","Riverside Clinic","Depot"];
+  var STOP_TIMES=["8:00","9:40","11:20","1:10"];
+  var RUSH_TIMES=["8:00","9:40","11:20","12:30","1:40"];
+
+  // ---------- DESKTOP horizontal ----------
+  var track=$("track"), pins=[];
+  function buildPins(list){ pins.forEach(function(p){p.el.remove();}); pins=[];
+    list.forEach(function(pct,idx){ var el=document.createElement("div"); el.className="pin"; el.style.left=pct+"%";
+      el.innerHTML='<div class="dot">'+(idx+1)+'</div><div class="stick"></div>'; track.appendChild(el); pins.push({el:el,pct:pct}); }); }
+  function setNowPct(pct){ var lane=$("lane").getBoundingClientRect(), tr=track.getBoundingClientRect();
+    var x=(tr.left-lane.left)+(pct/100)*tr.width; $("now").style.left=x+"px";
+    $("segDone").style.width=pct+"%"; $("segPlan").style.left=pct+"%"; $("segPlan").style.width=(100-pct)+"%";
+    pins.forEach(function(p){ p.el.classList.toggle("done",p.pct<=pct); }); }
+  var nowRAF=null;
+  function moveNow(f,t,dur,cb){ if(nowRAF)cancelAnimationFrame(nowRAF); var s=null;
+    function step(ts){ if(s===null)s=ts; var p=Math.min((ts-s)/dur,1); setNowPct(f+(t-f)*p); if(p<1)nowRAF=requestAnimationFrame(step); else if(cb)cb(); } nowRAF=requestAnimationFrame(step); }
+  function stopNow(){ if(nowRAF){cancelAnimationFrame(nowRAF);nowRAF=null;} }
+  var flag=null;
+  function showFlag(pct,label){ if(flag)flag.remove(); flag=document.createElement("div"); flag.className="flag"; flag.style.left=pct+"%";
+    flag.innerHTML='<div class="fl"><span class="fd2"></span>'+label+'</div><div class="stick"></div>'; track.appendChild(flag); flag.getBoundingClientRect(); flag.classList.add("show"); }
+  function hideFlag(){ if(flag){var f=flag;f.classList.remove("show");setTimeout(function(){if(f)f.remove();},400);flag=null;} }
+
+  // ---------- MOBILE vertical ----------
+  var vtl=$("vtl"), vstops=[];
+  function buildV(list,labels,times){ vstops.forEach(function(v){v.remove();}); vstops=[];
+    // insert after the vnow element so track/now stay behind
+    list.forEach(function(_,idx){ var v=document.createElement("div"); v.className="vstop";
+      v.innerHTML='<div class="vd">'+(idx+1)+'</div><div class="vtxt"><span class="vl">'+labels[idx]+'</span><span class="vs">ETA '+times[idx]+'</span></div>';
+      vtl.appendChild(v); vstops.push(v); }); }
+  function revealV(){ vstops.forEach(function(v,i){ setTimeout(function(){v.classList.add("show");}, i*110); }); }
+  function vNowTo(idx,total){ // move the vertical NOW line to just past stop idx
+    var rows=vstops; if(!rows.length)return;
+    var box=vtl.getBoundingClientRect();
+    var target = idx<0 ? (vtl.offsetTop||8) : (rows[Math.min(idx,rows.length-1)].offsetTop + rows[Math.min(idx,rows.length-1)].offsetHeight/2);
+    $("vnow").style.top=target+"px"; $("vfill").style.height=Math.max(0,target-8)+"px";
+    rows.forEach(function(v,i){ v.classList.toggle("done", i<=idx); });
+  }
+
+  // ---------- shared helpers ----------
+  var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
+  function setStatus(cls,txt){$("tlstatus").className="tlstatus "+cls;$("tlst").textContent=txt;}
+  function toast(t){$("toastTxt").textContent=t;$("toast").classList.add("show");}
+  function hideToast(){$("toast").classList.remove("show");}
+
+  // ---------- scenes (work for BOTH layouts) ----------
+  var token=0, vnowTimer=null;
+  function clearAll(){ stopNow(); hideToast(); hideFlag(); if(vnowTimer)clearInterval(vnowTimer); }
+
+  async function scene(i){
+    var my=++token, alive=function(){return my===token;};
+    clearAll();
+    var mob=isMobile();
+
+    if(i===0){ // monitoring
+      $("tltitle").textContent="Today · Van 7"; setStatus("ok","On schedule");
+      if(mob){ buildV(BASE,STOP_LABELS,STOP_TIMES); revealV(); await sleep(BASE.length*110+250); if(!alive())return; vNowTo(0,BASE.length);
+        // gently advance NOW down over stops
+        var idx=0; vnowTimer=setInterval(function(){ if(token!==my){clearInterval(vnowTimer);return;} idx=Math.min(idx+1,1); vNowTo(idx,BASE.length); },1800);
+      } else { buildPins(BASE); $("segDone").className="seg done"; $("segPlan").className="seg plan"; setNowPct(6); await sleep(200); if(!alive())return; moveNow(6,40,5200,null); }
+    }
+    else if(i===1){ // change detected — rush lands ahead of NOW
+      $("tltitle").textContent="Today · Van 7";
+      if(mob){ buildV(BASE,STOP_LABELS,STOP_TIMES); revealV(); await sleep(BASE.length*110+200); if(!alive())return; vNowTo(0,BASE.length);
+        setStatus("run","Change detected");
+        // insert a rush row visually between stop 3 and last (ahead of NOW)
+        var rushRow=document.createElement("div"); rushRow.className="vstop flagrow show"; rushRow.style.order="99";
+        rushRow.innerHTML='<div class="vd">!</div><div class="vtxt"><span class="vl">Rush order</span><span class="vs">Riverside · deliver by 5:00</span></div><span class="vtag rush">New</span>';
+        vstops[2].after(rushRow); vstops.push(rushRow);
+        toast("Rush order arrived ahead of NOW");
+      } else { buildPins(BASE); setNowPct(40); $("segDone").className="seg done"; $("segPlan").className="seg plan"; await sleep(400); if(!alive())return;
+        setStatus("run","Change detected"); showFlag(72,"Rush order"); toast("Rush order arrived ahead of NOW"); await sleep(1400); if(!alive())return; moveNow(40,46,3000,null); }
+    }
+    else if(i===2){ // targeted re-optimization — only after NOW re-solves
+      $("tltitle").textContent="Today · Van 7"; setStatus("run","Re-optimizing");
+      if(mob){ buildV(BASE,STOP_LABELS,STOP_TIMES); revealV(); await sleep(BASE.length*110+150); if(!alive())return; vNowTo(0,BASE.length);
+        await sleep(700); if(!alive())return;
+        // rebuild to RUSH (upcoming re-sequenced), keep first done
+        buildV(RUSH,RUSH_LABELS,RUSH_TIMES); revealV(); await sleep(RUSH.length*110+150); if(!alive())return; vNowTo(0,RUSH.length);
+        var nr=vstops[3]; nr.classList.add("win"); var tg=document.createElement("span"); tg.className="vtag new"; tg.textContent="Added"; nr.appendChild(tg);
+        toast("Only the stops after NOW re-solve"); await sleep(1400); if(!alive())return; setStatus("ok","Re-optimized · 0.8s"); hideToast();
+      } else { buildPins(BASE); setNowPct(46); $("segDone").className="seg done"; await sleep(500); if(!alive())return;
+        $("segPlan").className="seg reopt"; toast("Only the stops after NOW re-solve"); await sleep(1100); if(!alive())return;
+        buildPins(RUSH); setNowPct(46); $("segPlan").className="seg plan"; var np=pins[3].el; np.classList.add("win");
+        try{np.animate([{transform:"translateX(-50%) scale(1)"},{transform:"translateX(-50%) scale(1.25)"},{transform:"translateX(-50%) scale(1)"}],{duration:460,easing:"cubic-bezier(.34,1.4,.64,1)"});}catch(e){}
+        await sleep(700); if(!alive())return; setStatus("ok","Re-optimized · 0.8s"); hideToast(); moveNow(46,52,3000,null); }
+    }
+    else if(i===3){ // pushed to drivers
+      $("tltitle").textContent="Driver app · Van 7"; setStatus("ok","Pushed to app");
+      if(mob){ buildV(RUSH,RUSH_LABELS,RUSH_TIMES); revealV(); await sleep(RUSH.length*110+200); if(!alive())return; vNowTo(0,RUSH.length);
+        for(var k=1;k<vstops.length;k++){ (function(v,idx){ setTimeout(function(){ if(token!==my)return; v.classList.add("win");
+          try{v.animate([{transform:"translateX(0)"},{transform:"translateX(4px)"},{transform:"translateX(0)"}],{duration:380});}catch(e){} }, 400+idx*380); })(vstops[k],k); }
+        await sleep(400+vstops.length*380+300); if(!alive())return; toast("New sequence & ETAs pushed · customers notified");
+      } else { buildPins(RUSH); setNowPct(52); $("segDone").className="seg done"; $("segPlan").className="seg plan"; await sleep(400); if(!alive())return;
+        var up=pins.filter(function(p){return p.pct>52;});
+        for(var m=0;m<up.length;m++){ (function(p,idx){ setTimeout(function(){ if(token!==my)return; p.el.classList.add("win");
+          try{p.el.animate([{transform:"translateX(-50%) scale(1)"},{transform:"translateX(-50%) scale(1.2)"},{transform:"translateX(-50%) scale(1)"}],{duration:420,easing:"cubic-bezier(.34,1.4,.64,1)"});}catch(e){} }, 500+idx*450); })(up[m],m); }
+        await sleep(500+up.length*450+300); if(!alive())return; toast("New sequence & ETAs pushed · customers notified"); moveNow(52,58,3200,null); }
+    }
+  }
+
+  // ---------- rail + auto-advance ----------
+  var feats=Array.prototype.slice.call(document.querySelectorAll(".feat"));
+  var current=-1, autoTimer=null, progRAF=null, AUTO_MS=5800;
+  function select(i){ feats.forEach(function(f,k){ f.classList.toggle("active",k===i); var p=f.querySelector(".prog"); p.style.width="0"; });
+    current=i; scene(i);
+    var pbar=feats[i].querySelector(".prog"); if(progRAF)cancelAnimationFrame(progRAF); var s=null;
+    function pstep(ts){ if(s===null)s=ts; var p=Math.min((ts-s)/AUTO_MS,1); pbar.style.width=(p*100)+"%"; if(p<1)progRAF=requestAnimationFrame(pstep); } progRAF=requestAnimationFrame(pstep);
+    if(autoTimer)clearTimeout(autoTimer); autoTimer=setTimeout(function(){ select((i+1)%feats.length); }, AUTO_MS);
+    // scroll active tab into view on mobile
+    if(isMobile()){ try{ feats[i].scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"}); }catch(e){} }
+  }
+  feats.forEach(function(f,i){ f.addEventListener("click",function(){ select(i); }); });
+
+  var onScreen=true;
+  if("IntersectionObserver" in window){ try{ new IntersectionObserver(function(es){ onScreen=es[0].isIntersecting;
+    if(!onScreen){ if(autoTimer)clearTimeout(autoTimer); if(progRAF)cancelAnimationFrame(progRAF); clearAll(); }
+    else { select(current<0?0:current); }
+  },{threshold:0.12}).observe(document.querySelector(".card")); }catch(e){} }
+
+  // ---- robust height reporting: fire on EVERY size change + after layout settles ----
+  var lastH=0;
+  function report(force){
+    var card=document.querySelector(".card"); if(!card)return;
+    var h=Math.ceil(card.getBoundingClientRect().height);
+    if(h>0 && (force || h!==lastH)){ lastH=h; try{parent.postMessage({syncnoxHeight:h},"*");}catch(e){} }
+  }
+  // report repeatedly for a short window after any change (covers CSS transitions + layout swap)
+  function reportBurst(){ report(true); var n=0; var iv=setInterval(function(){ report(); if(++n>=10) clearInterval(iv); },120); }
+
+  window.addEventListener("load",reportBurst);
+  var rt=null, lastMobile=null;
+  window.addEventListener("resize",function(){
+    report();                                   // immediate
+    clearTimeout(rt);
+    rt=setTimeout(function(){
+      var m=isMobile();
+      if(m!==lastMobile){ lastMobile=m; if(current>=0) select(current); }  // re-run scene only when crossing the breakpoint
+      reportBurst();                            // re-measure the (possibly new) layout height
+    },200);
+  });
+  // ResizeObserver on the card catches any layout-driven height change
+  if(window.ResizeObserver){ try{ new ResizeObserver(function(){ report(); }).observe(document.querySelector(".card")); }catch(e){} }
+  // also observe the stagebox specifically (its height changes with the layout swap)
+  if(window.ResizeObserver){ try{ new ResizeObserver(function(){ report(); }).observe(document.querySelector(".stagebox")); }catch(e){} }
+
+  lastMobile=isMobile();
+  setTimeout(function(){ select(0); reportBurst(); },120);
+})();
+</script>
+</body>
+</html>
