@@ -21,7 +21,7 @@
   *{box-sizing:border-box;margin:0;padding:0;border-radius:0}
   html,body{margin:0}
   body{font-family:var(--f);background:transparent;-webkit-font-smoothing:antialiased}
-  #stage{width:100%;max-width:100%;overflow:hidden}
+  #stage{width:100%;max-width:100%;overflow:hidden;container-type:inline-size;container-name:showcase}
   .card{max-width:100%}
   *{max-width:100%}
 
@@ -96,7 +96,7 @@
   .vtl{display:none}
 
   /* =========================== MOBILE (portrait) =========================== */
-  @media(max-width:680px){
+  @container showcase (max-width:680px){
     .card{grid-template-columns:1fr;gap:12px;padding:12px;min-height:0;
       background:linear-gradient(160deg,#064E3B 0%,#0A7A57 40%,#34C08D 78%,#A6EFD1 100%)}
     /* rail: compact stacked header + horizontal chip tabs */
@@ -136,7 +136,7 @@
 
     .toast{bottom:14px;font-size:.72rem;padding:8px 13px}
   }
-  @media(max-width:400px){
+  @container showcase (max-width:400px){
     .stagebox{min-height:0}
     .vstop .vl{font-size:.82rem}
   }
@@ -193,7 +193,7 @@
 <script>
 (function(){
   var $=function(id){return document.getElementById(id);};
-  var isMobile=function(){return window.matchMedia("(max-width:680px)").matches;};
+  var isMobile=function(){ var c=document.querySelector(".card"); return c ? c.getBoundingClientRect().width<=680 : window.innerWidth<=680; };
 
   // ---------- shared data ----------
   var BASE=[10,32,55,82];
