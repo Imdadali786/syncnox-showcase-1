@@ -16,7 +16,7 @@
     --green:#10B981; --green-deep:#0A7A57; --green-pale:#E9F7EF; --green-ring:#B9E7D5;
     --amber:#C77A12; --amberbg:#FBF0DF;
     --f:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    --e:cubic-bezier(.4,.1,.2,1);
+    --e:cubic-bezier(.33,.02,.15,1);
   }
   *{box-sizing:border-box;margin:0;padding:0;border-radius:0}
   html,body{margin:0;background:transparent}
@@ -30,10 +30,10 @@
      the animation cannot cause resizing. Height is a pure function of width. */
   .fit{position:relative;width:100%;overflow:hidden}
   .frame{position:absolute;top:0;left:0;transform-origin:top left;
-    background:linear-gradient(145deg,#053E2F 0%,#0A7A57 32%,#2FB985 66%,#8DEBC4 100%)}
+    background:linear-gradient(100deg,#050807 0%,#0B3D20 30%,#1E7A3E 62%,#57C46A 100%)}
   .frame::before{content:"";position:absolute;inset:0;background:
-    radial-gradient(120% 90% at 12% 8%, rgba(255,255,255,.14), transparent 55%),
-    radial-gradient(90% 80% at 92% 96%, rgba(4,60,44,.35), transparent 60%);pointer-events:none;z-index:0}
+    radial-gradient(110% 90% at 8% 10%, rgba(255,255,255,.10), transparent 52%),
+    radial-gradient(90% 80% at 96% 94%, rgba(0,0,0,.25), transparent 58%);pointer-events:none;z-index:0}
   .frame > *{position:relative;z-index:1}
 
   /* inner: rail + stage. Authored at fixed size; two internal variants (wide / tall). */
@@ -94,7 +94,7 @@
   .laneH{position:relative;height:110px;background:var(--soft-bg);box-shadow:inset 0 0 0 1px var(--line)}
   .lanelabel{position:absolute;top:12px;left:15px;font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
   .track{position:absolute;left:15px;right:15px;bottom:30px;height:22px;background:#E4E8EA}
-  .seg{position:absolute;top:0;bottom:0;transition:left .6s var(--e),width .6s var(--e),background .4s}
+  .seg{position:absolute;top:0;bottom:0;transition:left .8s cubic-bezier(.33,.02,.15,1),width .8s cubic-bezier(.33,.02,.15,1),background .5s}
   .seg.done{background:var(--done)} .seg.plan{background:var(--plan)} .seg.reopt{background:var(--green)}
   .now{position:absolute;top:9px;bottom:9px;width:2px;background:var(--ink);z-index:4;transition:left .12s linear}
   .now::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;background:radial-gradient(circle,rgba(16,185,129,.4),transparent 70%);animation:nowglow 2s ease-in-out infinite}
@@ -119,20 +119,26 @@
   .frame.tall .laneH,.frame.tall .axis{display:none}
   .frame.tall .laneV{display:block}
   .frame.wide .laneV{display:none}
-  .vtrack{position:absolute;left:70px;top:16px;bottom:16px;width:2px;background:#E4E8EA;z-index:1}
-  .vfill{position:absolute;left:70px;top:16px;width:2px;background:linear-gradient(180deg,var(--green-deep),var(--green));height:0;transition:height .9s cubic-bezier(.5,.05,.15,1);z-index:1}
-  .vnow{position:absolute;left:62px;width:18px;height:2px;background:var(--ink);z-index:5;transition:top .9s cubic-bezier(.5,.05,.15,1)}
-  .vnow::before{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:radial-gradient(circle,rgba(16,185,129,.35),transparent 70%);animation:nowglow 2s ease-in-out infinite}
-  @keyframes nowglow{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(.8)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}}
-  .vnow::after{content:"NOW";position:absolute;right:calc(100% + 6px);top:50%;transform:translateY(-50%);font-size:.5rem;font-weight:700;letter-spacing:.07em;color:#fff;background:var(--ink);padding:.18em .42em;white-space:nowrap;line-height:1}
-  .frame.tall .laneV{padding:8px 0 4px 56px;flex:0 0 auto}
-  .vstop{position:relative;display:flex;align-items:center;gap:16px;padding:11px 0;z-index:2;min-height:52px;opacity:0;transform:translateY(10px)}
-  .vstop.in{opacity:1;transform:none;transition:opacity .5s cubic-bezier(.22,.7,.25,1),transform .5s cubic-bezier(.34,1.4,.64,1)}
+  .vtrack{position:absolute;left:22px;top:28px;bottom:28px;width:2px;background:#DDE1E4;z-index:1}
+  .vfill{position:absolute;left:22px;top:28px;width:2px;background:linear-gradient(180deg,var(--green-deep),var(--green));height:0;transition:height 1s cubic-bezier(.4,0,.1,1);z-index:2}
+  .frame.tall .laneV{padding:6px 0 2px 4px;flex:0 0 auto;position:relative}
+  .vstop{position:relative;display:flex;align-items:center;gap:15px;padding:0;height:56px;z-index:2}
+  .vstop.in{animation:stopin .5s cubic-bezier(.34,1.4,.64,1) both}
+  @keyframes stopin{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
   .vstop.slidein{animation:stopslide .55s cubic-bezier(.34,1.5,.64,1) both}
   @keyframes stopslide{0%{opacity:0;transform:translateY(-14px) scale(.94)}60%{opacity:1}100%{opacity:1;transform:none}}
-  .vstop .vd{width:30px;height:30px;flex:none;background:var(--panel);box-shadow:inset 0 0 0 2.6px var(--plan);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--soft);transition:.4s;position:relative;z-index:3}
+  .vstop .vd{width:36px;height:36px;flex:none;background:var(--panel);box-shadow:inset 0 0 0 2px var(--line), 0 2px 6px -2px rgba(20,40,30,.15);display:flex;align-items:center;justify-content:center;transition:box-shadow .5s cubic-bezier(.33,.02,.15,1),background .5s cubic-bezier(.33,.02,.15,1);position:relative;z-index:3}
+  .vstop .vd svg{width:17px;height:17px;stroke:var(--soft);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:stroke .5s cubic-bezier(.33,.02,.15,1)}
+  .vstop.done .vd{box-shadow:inset 0 0 0 2px var(--green-ring),0 2px 6px -2px rgba(20,40,30,.12)}
+  .vstop.done .vd svg{stroke:var(--green-deep)}
+  .vstop.win .vd{box-shadow:inset 0 0 0 2px var(--green)!important,0 2px 8px -2px rgba(16,185,129,.4)!important;background:var(--green-pale)!important}
+  .vstop.win .vd svg{stroke:var(--green-deep)!important}
+  /* current step gets an in-row NOW tag (never overlaps) */
+  .vstop .nowtag{margin-left:8px;flex:none;font-size:.5rem;font-weight:700;letter-spacing:.06em;color:#fff;background:var(--ink);padding:.26em .52em;line-height:1;opacity:0;transform:translateX(-4px);transition:opacity .4s cubic-bezier(.33,.02,.15,1),transform .4s cubic-bezier(.34,1.4,.64,1)}
+  .vstop.current .nowtag{opacity:1;transform:translateX(0)}
+  .vstop.current .vd{box-shadow:inset 0 0 0 2.5px var(--ink),0 3px 8px -2px rgba(20,40,30,.25)}
+  .vstop.current .vd svg{stroke:var(--ink)}
   .vstop.done .vd{box-shadow:inset 0 0 0 2.4px var(--done);color:var(--done)}
-  .vstop.win .vd{box-shadow:inset 0 0 0 2.6px var(--green)!important;color:var(--green-deep)!important;background:var(--green-pale)!important}
   .vstop.pop .vd{animation:vdpop .5s cubic-bezier(.34,1.6,.64,1)}
   @keyframes vdpop{0%{transform:scale(1)}45%{transform:scale(1.22)}100%{transform:scale(1)}}
   .vstop .vtxt{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -143,7 +149,8 @@
   .vstop .vtag.new{background:var(--green-pale);color:var(--green-deep)}
 
   .toast{position:absolute;left:50%;bottom:20px;transform:translateX(-50%) translateY(8px);z-index:6;display:inline-flex;align-items:center;gap:.5em;background:#12201A;color:#EAF6F0;padding:10px 15px;box-shadow:0 12px 30px -12px rgba(4,30,20,.6);opacity:0;transition:opacity .35s,transform .35s var(--e);pointer-events:none;white-space:nowrap;font-size:.8rem;font-weight:600;max-width:calc(100% - 24px)}
-  .frame.tall .toast{white-space:normal;text-align:left;bottom:14px;font-size:.76rem;max-width:calc(100% - 20px)}
+  .frame.tall .toast{white-space:normal;text-align:left;bottom:14px;left:20px;right:20px;transform:none;font-size:.74rem;max-width:none;width:auto}
+  .frame.tall .toast.show{transform:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
   .toast{transform:translateX(-50%) translateY(10px) scale(.96)}
   .toast .td{width:6px;height:6px;background:var(--green);flex:none}
@@ -187,7 +194,7 @@
 
             <!-- vertical (tall) -->
             <div class="laneV" id="laneV">
-              <div class="vtrack"></div><div class="vfill" id="vfill"></div><div class="vnow" id="vnow" style="top:6px"></div>
+              <div class="vtrack"></div><div class="vfill" id="vfill"></div>
             </div>
           </div>
           <div class="toast" id="toast"><span class="td"></span><span id="toastTxt"></span></div>
@@ -205,7 +212,7 @@
   // ====== FIXED-FRAME SCALER: author at a fixed design size, scale to fill width ======
   // Two design sizes: WIDE (1000x600) for desktop, TALL (560x760) for narrow. We pick by
   // the CONTAINER width, set the frame's fixed pixel size, then scale it. Height = scaled height.
-  var WIDE={w:1000,h:600}, TALL={w:560,h:540};
+  var WIDE={w:1000,h:600}, TALL={w:560,h:624};
   var mode="wide";
   function layout(){
     var stage=$("stage"); if(!stage)return;
@@ -251,17 +258,40 @@
 
   // vertical stops
   var laneV=$("laneV"), vstops=[];
+  // step icons (SVG paths) — warehouse, location pin, building, package, home(depot), alert(rush)
+  var ICONS={
+    depot:'<path d="M3 10 12 3l9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-6h6v6"/>',
+    warehouse:'<path d="M3 9 12 4l9 5v11H3z"/><path d="M7 20v-6h10v6"/><path d="M10 14v6M14 14v6"/>',
+    pin:'<path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+    building:'<path d="M6 21V4h9v17"/><path d="M15 8h3v13"/><path d="M9 8h1M9 12h1M9 16h1"/>',
+    package:'<path d="M4 7h16v11H4z"/><path d="M4 7l8 5 8-5"/>',
+    alert:'<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0z"/>'
+  };
+  function iconFor(label){ var l=label.toLowerCase();
+    if(l.indexOf("warehouse")>-1)return ICONS.warehouse;
+    if(l.indexOf("depot")>-1)return ICONS.depot;
+    if(l.indexOf("rush")>-1)return ICONS.alert;
+    if(l.indexOf("plaza")>-1||l.indexOf("clinic")>-1||l.indexOf("riverside")>-1)return ICONS.building;
+    return ICONS.pin;
+  }
   function buildV(list,labels,times,animate){ vstops.forEach(function(v){v.remove();}); vstops=[];
     list.forEach(function(_,idx){ var v=document.createElement("div"); v.className="vstop";
-      v.innerHTML='<div class="vd">'+(idx+1)+'</div><div class="vtxt"><span class="vl">'+labels[idx]+'</span><span class="vs">ETA '+times[idx]+'</span></div>';
+      v.innerHTML='<div class="vd"><svg viewBox="0 0 24 24">'+iconFor(labels[idx])+'</svg></div>'+
+                  '<div class="vtxt"><span class="vl">'+labels[idx]+'</span><span class="vs">ETA '+times[idx]+'</span></div>'+
+                  '<span class="nowtag">NOW</span>';
       laneV.appendChild(v); vstops.push(v);
-      if(animate){ (function(el,i){ setTimeout(function(){ el.classList.add("in"); }, 80+i*90); })(v,idx); }
-      else { v.classList.add("in"); }
+      if(animate){ (function(el,i){ el.style.opacity="0"; setTimeout(function(){ el.style.opacity=""; el.classList.add("in"); }, 90+i*100); })(v,idx); }
     }); }
-  function setNowV(idx){ if(!vstops.length)return; var r=vstops[Math.min(Math.max(idx,0),vstops.length-1)];
-    var t=r.offsetTop+r.offsetHeight/2; $("vnow").style.top=t+"px"; $("vfill").style.height=Math.max(0,t-10)+"px";
-    vstops.forEach(function(v,i){ var wasDone=v.classList.contains("done"); var nowDone=i<=idx; v.classList.toggle("done",nowDone);
-      if(nowDone && !wasDone){ v.classList.add("pop"); (function(el){ setTimeout(function(){el.classList.remove("pop");},520); })(v); } }); }
+  function setNowV(idx){ if(!vstops.length)return; idx=Math.min(Math.max(idx,0),vstops.length-1);
+    var cur=vstops[idx];
+    // green progress fill down to the current step
+    var t=cur.offsetTop+cur.offsetHeight/2; var vf=$("vfill"); if(vf)vf.style.height=Math.max(0,t-28)+"px";
+    vstops.forEach(function(v,i){
+      var wasDone=v.classList.contains("done"); var nowDone=i<idx;   // steps BEFORE current = done
+      v.classList.toggle("done",nowDone);
+      v.classList.toggle("current",i===idx);                        // current step gets the NOW tag
+      if(nowDone && !wasDone){ v.classList.add("pop"); (function(el){ setTimeout(function(){el.classList.remove("pop");},520); })(v); }
+    }); }
 
   function buildStops(){ if(mode==="wide"){ buildPinsH(sceneRush?RUSH:BASE); } else { buildV(sceneRush?RUSH:BASE, sceneRush?RUSH_LABELS:LABELS, sceneRush?RUSH_TIMES:TIMES); } }
 
